@@ -35,7 +35,7 @@ async def executar_cenario(titulo, identificador, filtro=False):
 
 async def run_tests():
     # 1. Sucesso (CPF)
-    await executar_cenario("Cenário 1: Sucesso (CPF)", "73665657172")
+    await executar_cenario("Cenário 1: Sucesso (CPF)", "73665649153")
 
     # 2. Erro (CPF Inexistente)
     await executar_cenario("Cenário 2: Erro (CPF Inexistente)", "99999999999")
