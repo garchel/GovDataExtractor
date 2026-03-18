@@ -1,16 +1,14 @@
 import base64
 import asyncio
 import re
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, expect
 
 class PortalScraper:
     def __init__(self):
         self.url_busca = "https://portaldatransparencia.gov.br/pessoa-fisica/busca/lista"
 
     def e_identificador_numerico(self, texto: str) -> bool:
-        # Remove caracteres de formatação para validar apenas os dígitos
         apenas_numeros = re.sub(r'\D', '', texto)
-        # CPF e NIS possuem 11 dígitos
         return len(apenas_numeros) == 11
 
     async def consultar(self, identificador: str, filtro_social: bool = False):
@@ -25,50 +23,77 @@ class PortalScraper:
                 print(f"[*] Iniciando busca para: {identificador}")
                 await page.goto(self.url_busca, wait_until="networkidle", timeout=60000)
 
-                # Preenchimento do termo
-                await page.fill("#termo", identificador)
+                # 1. Limpeza e Preenchimento
+                await page.fill("#termo", "")
 
                 if filtro_social:
                     print("[*] Aplicando filtro de programa social...")
-                    btn_refinar = page.locator('button[aria-controls="box-busca-refinada"]')
-                    await btn_refinar.click()
-                    
-                    checkbox = page.locator("#beneficiarioProgramaSocial")
-                    await checkbox.wait_for(state="visible")
-                    await checkbox.check()
-                    
-                    await page.click("#btnConsultarPF")
-                else:
-                    await page.keyboard.press("Enter")
+                    await page.click('button[aria-controls="box-busca-refinada"]')
+                    label_social = page.locator("label[for='beneficiarioProgramaSocial']")
+                    await label_social.wait_for(state="visible")
+                    await label_social.click(force=True)
 
-                # Espera a renderização dos resultados
-                await page.wait_for_load_state("domcontentloaded")
-                await page.wait_for_timeout(2500) 
+                    # await page.click("#btnConsultarPF", force=True)
                 
-                container_resultados = page.locator("#countResultados")
-                texto_resultados = (await container_resultados.inner_text()).strip() if await container_resultados.count() > 0 else "0"
+                await page.fill("#termo", identificador)
+                await page.keyboard.press("Enter")
 
-                # --- AJUSTE DE MENSAGENS DE ERRO ---
-                if texto_resultados == "0":
+                # 2. SINCRONIZAÇÃO POR TOKENS (Valida se o DOM atualizou)
+                print("[*] Aguardando atualização dos resultados...")
+                
+                # Prepara os tokens para validação (apenas para nomes)
+                tokens_busca = []
+                if not self.e_identificador_numerico(identificador):
+                    tokens_busca = [t.upper() for t in identificador.split() if len(t) > 2]
+                    print(f"[*] Tokens para validação: {tokens_busca}")
+
+                for _ in range(30): # Até 15 segundos
+                    await page.wait_for_load_state("networkidle")
+                    
+                    primeiro_link = page.locator(".link-busca-nome").first
+                    if await primeiro_link.count() > 0:
+                        nome_na_tela = (await primeiro_link.inner_text()).upper()
+                        
+                        # Se for CPF, não precisa tokenizar, apenas prossegue
+                        if self.e_identificador_numerico(identificador):
+                            break
+                        
+                        # Verifica se todos os tokens de pesquisa estão no nome atual
+                        print(f"[*] Analisando: {nome_na_tela[:40]}...")
+                        valido = True
+                        for i, token in enumerate(tokens_busca, 1):
+                            if token in nome_na_tela:
+                                print(f"    > Checagem termo {i} - {token} - OK")
+                            else:
+                                valido = False
+                                break # Se um token falhar, o DOM ainda é o antigo
+                        
+                        if valido:
+                            print("[*] Resultado validado com sucesso.")
+                            break
+                    
+                    await page.wait_for_timeout(500)
+
+                # 3. Validação Final de Resultados
+                texto_resultados = (await page.locator("#countResultados").inner_text()).strip()
+                
+                if "0 resultados" in texto_resultados or texto_resultados == "0":
                     if self.e_identificador_numerico(identificador):
-                        # Caso seja CPF ou NIS inexistente
-                        return {
-                            "status": "error",
-                            "mensagem": "Não foi possível retornar os dados no tempo de resposta solicitado."
-                        }
+                        return {"status": "error", "mensagem": "Não foi possível retornar os dados no tempo de resposta solicitado."}
                     else:
-                        # Caso seja um Nome inexistente
-                        return {
-                            "status": "error", 
-                            "mensagem": f"Foram encontrados 0 resultados para o termo {identificador}."
-                        }
+                        return {"status": "error", "mensagem": f"Foram encontrados 0 resultados para o termo {identificador}."}
 
-                # Entrar no Panorama
+                # 4. Acesso ao Registro
                 print("[*] Clicando no primeiro resultado...")
-                await page.click(".link-busca-nome >> nth=0")
+                link_resultado = page.locator(".link-busca-nome").first
+                await link_resultado.wait_for(state="visible", timeout=10000)
+                await link_resultado.click()
+                
+                # Aguarda carregar a página de detalhes
+                await page.wait_for_selector("strong:has-text('Nome')", timeout=20000)
                 await page.wait_for_load_state("networkidle")
 
-                # Coleta Panorama
+                # 5. Coleta Panorama
                 panorama_dados = {
                     "nome": (await page.locator("strong:has-text('Nome') + span").inner_text()).strip(),
                     "cpf": (await page.locator("strong:has-text('CPF') + span").inner_text()).strip(),
@@ -77,24 +102,22 @@ class PortalScraper:
 
                 main_evidence = base64.b64encode(await page.screenshot(full_page=True)).decode('utf-8')
 
-                # Detalhamento de Recursos
+                # 6. Coleta de Benefícios
                 print("[*] Expandindo Recebimento de Recursos...")
-                btn_recursos = page.locator("button[aria-controls='accordion-recebimentos-recursos']")
                 beneficios_coletados = []
-
+                btn_recursos = page.locator("button[aria-controls='accordion-recebimentos-recursos']")
+                
                 if await btn_recursos.count() > 0:
                     await btn_recursos.click()
-                    await page.wait_for_timeout(1000)
+                    await page.wait_for_timeout(1500)
 
                     tabelas = page.locator("#accordion-recebimentos-recursos .responsive")
-                    count_tabelas = await tabelas.count()
-
-                    for i in range(count_tabelas):
+                    for i in range(await tabelas.count()):
                         tabela = tabelas.nth(i)
                         nome_beneficio = await tabela.locator("strong").first.inner_text()
                         
                         if any(x in nome_beneficio for x in ["Auxílio Brasil", "Auxílio Emergencial", "Bolsa Família"]):
-                            print(f"[*] Coletando detalhes de: {nome_beneficio}")
+                            print(f"[*] Coletando detalhes de: {nome_beneficio.strip()}")
                             linha = tabela.locator("tbody tr").first
                             valor = await linha.locator("td").nth(3).inner_text()
                             
@@ -108,7 +131,11 @@ class PortalScraper:
                                 "valor_total": valor.strip(),
                                 "evidencia_base64": evidence_detail
                             })
-                            await page.go_back(wait_until="domcontentloaded")
+                            await page.go_back(wait_until="networkidle")
+                            # Após o go_back, precisamos re-expandir o acordeão se houver mais de um benefício
+                            if await btn_recursos.get_attribute("aria-expanded") == "false":
+                                await btn_recursos.click()
+                                await page.wait_for_timeout(1000)
 
                 print("[+] Automação finalizada com sucesso.")
                 return {
@@ -121,10 +148,6 @@ class PortalScraper:
 
             except Exception as e:
                 print(f"[ERROR] Erro na captura: {str(e)}")
-                # Fallback para erros inesperados de timeout ou conexão
-                return {
-                    "status": "error", 
-                    "mensagem": "Não foi possível retornar os dados no tempo de resposta solicitado."
-                }
+                return {"status": "error", "mensagem": "Não foi possível retornar os dados no tempo de resposta solicitado."}
             finally:
                 await browser.close()

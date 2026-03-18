@@ -1,0 +1,10 @@
+# Ambientes Virtuais
+venv/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Playwright
+/browser-snapshots/

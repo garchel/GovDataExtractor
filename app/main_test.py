@@ -35,19 +35,23 @@ async def executar_cenario(titulo, identificador, filtro=False):
 
 async def run_tests():
     # 1. Sucesso (CPF)
-    await executar_cenario("Cenário 1: Sucesso (CPF)", "73665657172")
+    # await executar_cenario("Cenário 1: Sucesso (CPF)", "73665657172")
 
     # 2. Erro (CPF Inexistente)
-    await executar_cenario("Cenário 2: Erro (CPF Inexistente)", "99999999999")
+    #await executar_cenario("Cenário 2: Erro (CPF Inexistente)", "99999999999")
 
     # 3. Sucesso (Nome Completo)
-    await executar_cenario("Cenário 3: Sucesso (Nome)", "Paulo Victor Carvalho de Oliveira")
+    # await executar_cenario("Cenário 3: Sucesso (Nome)", "Paulo Victor Carvalho de Oliveira")
 
-    # 4. Erro (Nome Inexistente)
-    await executar_cenario("Cenário 4: Erro (Nome)", "NomeInexistenteXyZ123")
+		# 4. Filtrado (Nome Completo + Filtro Social)
+    # await executar_cenario("Cenário 4: Filtrado (Nome + Social)", "Paulo Victor Carvalho de Oliveira", filtro=True)
+    
+    # 5. Erro (Nome Inexistente)
+    # await executar_cenario("Cenário 5: Erro (Nome)", "NomeInexistenteXyZ123")
 
-    # 5. Filtrado (Sobrenome + Filtro Social)
-    await executar_cenario("Cenário 5: Filtrado (Sobrenome + Social)", "Oliveira", filtro=True)
+    # 6. Filtrado (Sobrenome + Filtro Social)
+    await executar_cenario("Cenário 6: Filtrado (Sobrenome + Social)", "Oliveira", filtro=True)
+    
 
 if __name__ == "__main__":
     asyncio.run(run_tests())
