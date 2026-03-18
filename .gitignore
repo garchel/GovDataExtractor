@@ -8,3 +8,6 @@ __pycache__/
 
 # Playwright
 /browser-snapshots/
+
+# Imagens das Evidencias
+evidencias_portal

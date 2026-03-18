@@ -10,8 +10,8 @@ COPY requirements.txt .
 # Instala as dependências do Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Instala apenas o navegador Chromium (economiza espaço)
-RUN playwright install chromium
+# Instala apenas o navegador Firefox
+RUN playwright install firefox
 
 # Copia o restante do código para o container
 COPY . .
