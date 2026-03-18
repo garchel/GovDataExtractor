@@ -32,8 +32,6 @@ class PortalScraper:
                     label_social = page.locator("label[for='beneficiarioProgramaSocial']")
                     await label_social.wait_for(state="visible")
                     await label_social.click(force=True)
-
-                    # await page.click("#btnConsultarPF", force=True)
                 
                 await page.fill("#termo", identificador)
                 await page.keyboard.press("Enter")
@@ -66,7 +64,7 @@ class PortalScraper:
                                 print(f"    > Checagem termo {i} - {token} - OK")
                             else:
                                 valido = False
-                                break # Se um token falhar, o DOM ainda é o antigo
+                                break
                         
                         if valido:
                             print("[*] Resultado validado com sucesso.")
@@ -103,13 +101,15 @@ class PortalScraper:
                 main_evidence = base64.b64encode(await page.screenshot(full_page=True)).decode('utf-8')
 
                 # 6. Coleta de Benefícios
-                print("[*] Expandindo Recebimento de Recursos...")
+                print("[*] Iniciando Coleta de Benefícios...")
                 beneficios_coletados = []
+                
                 btn_recursos = page.locator("button[aria-controls='accordion-recebimentos-recursos']")
                 
                 if await btn_recursos.count() > 0:
                     await btn_recursos.click()
                     await page.wait_for_timeout(1500)
+                    print("[*] Recebimento de Recursos Expandidos")
 
                     tabelas = page.locator("#accordion-recebimentos-recursos .responsive")
                     for i in range(await tabelas.count()):
@@ -131,11 +131,15 @@ class PortalScraper:
                                 "valor_total": valor.strip(),
                                 "evidencia_base64": evidence_detail
                             })
+                            print("[*] Voltando para o Panorama")
                             await page.go_back(wait_until="networkidle")
                             # Após o go_back, precisamos re-expandir o acordeão se houver mais de um benefício
-                            if await btn_recursos.get_attribute("aria-expanded") == "false":
-                                await btn_recursos.click()
-                                await page.wait_for_timeout(1000)
+                            if i in range(await tabelas.count() - 1):
+                              print("[*] Expandindo Recursos novamente")
+                              await btn_recursos.click()
+                              await page.wait_for_timeout(1500)
+                              
+
 
                 print("[+] Automação finalizada com sucesso.")
                 return {
