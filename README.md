@@ -1,25 +1,24 @@
 # 🤖 GovDataExtractor - RPA & Hiperautomação
 Este projeto consiste em um microsserviço de automação robótica (RPA) desenvolvido em Python e Playwright para a extração assistida de dados e evidências do Portal da Transparência.
 
-O diferencial desta solução é sua arquitetura modular e a disponibilização via API REST (FastAPI), facilitando a integração com fluxos de hiperautomação (Make, Zapier, Power Automate).
+O diferencial desta solução é sua arquitetura modular e a disponibilização via API REST (FastAPI).
 
 ## Arquitetura e Modularização
-Diferente de scripts monolíticos, este projeto segue o princípio de responsabilidade única:
 
-*config.py:* Centraliza seletores CSS, URLs e timeouts. Facilita a manutenção rápida caso o layout do portal mude.
+***config.py:*** Centraliza seletores CSS, URLs e timeouts. Facilita a manutenção rápida caso o layout do portal mude.
 
-*browser.py:* Gerencia o ciclo de vida do navegador com integração de Stealth Mode para evitar detecção por WAF/Bot-Blockers.
+***browser.py:*** Gerencia o ciclo de vida do navegador com integração de Stealth Mode para evitar detecção por WAF/Bot-Blockers.
 
-*utils.py:* Funções puras de processamento (Regex de CPF, conversão Base64 e slugificação de nomes).
+***utils.py:*** Funções puras de processamento (Regex de CPF, conversão Base64 e slugificação de nomes).
 
-*scraper.py:* A lógica core do RPA, focada puramente na navegação e extração.
+***scraper.py:*** A lógica core do RPA, focada puramente na navegação e extração.
 
-*api.py:* Interface FastAPI que expõe o robô como um serviço documentado via Swagger.
+***api.py:*** Interface FastAPI que expõe o robô como um serviço documentado via Swagger.
 
 ## Como Executar
 Você pode rodar o projeto localmente ou via Docker.
 
-Opção 1: Via Docker (Recomendado)
+**Opção 1:** Via Docker (Recomendado)
 Certifique-se de ter o Docker instalado e execute:
 
 ````Bash
@@ -27,7 +26,7 @@ docker-compose up --build
 ````
 A API estará disponível em http://localhost:8000.
 
-Opção 2: Localmente
+**Opção 2:** Localmente
 
 1. Crie e ative o ambiente virtual:
 
