@@ -104,14 +104,23 @@ class PortalScraper:
                 await self._executar_busca(page, identificador, filtro_social)
                 
                 sucesso_selecao = await self._validar_e_selecionar_resultado(page, identificador)
+                
                 if not sucesso_selecao:
-                    msg = "Não foi possível retornar os dados no tempo de resposta solicitado." if self.utils.e_identificador_numerico(identificador) else f"Foram encontrados 0 resultados para o termo {identificador}."
-                    return {"status": "error", "mensagem": msg}
+                    if self.utils.e_identificador_numerico(identificador):
+                        msg = "Não foi possível retornar os dados no tempo de resposta solicitado."
+                    else:
+                        msg = f"Foram encontrados 0 resultados para o termo {identificador}."
+                    
+                    return {
+                        "status": "error", 
+                        "identificador": identificador,
+                        "mensagem": msg
+                    }
 
                 await page.wait_for_selector(self.config.LABEL_NOME, timeout=20000)
                 await page.wait_for_load_state("networkidle")
 
-                print("[*] Abrindo seção de Recursos...")
+                # Abre a seção de recursos/benefícios
                 btn_recursos = page.locator(self.config.BTN_RECURSOS)
                 try:
                     await btn_recursos.wait_for(state="visible", timeout=5000)
@@ -130,7 +139,6 @@ class PortalScraper:
                 main_evidence = self.utils.converter_para_base64(foto_panorama)
                 beneficios = await self._extrair_beneficios(page, caminho_pessoa)
 
-                print("[+] Automação finalizada com sucesso.")
                 return {
                     "status": "success",
                     "identificador": identificador,
@@ -140,6 +148,10 @@ class PortalScraper:
                 }
             except Exception as e:
                 print(f"[ERROR] Erro na captura: {str(e)}")
-                return {"status": "error", "mensagem": "Erro interno no processamento dos dados."}
+                return {
+                    "status": "error", 
+                    "identificador": identificador,
+                    "mensagem": "Erro interno no processamento dos dados."
+                }
             finally:
                 await browser.close()

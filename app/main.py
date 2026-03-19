@@ -15,8 +15,8 @@ def truncar_base64(obj, limite=50):
         return {k: truncar_base64(v, limite) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [truncar_base64(i, limite) for i in obj]
-    elif isinstance(obj, str) and len(obj) > 100: # Aumentei o limite para não truncar mensagens de erro
-        if not " " in obj: # Se não tem espaço, provavelmente é Base64
+    elif isinstance(obj, str) and len(obj) > 100:
+        if not " " in obj: 
             return obj[:limite] + "... [BASE64 TRUNCADO]"
     return obj
 
@@ -35,10 +35,10 @@ async def executar_cenario(titulo, identificador, filtro=False):
 
 async def run_tests():
     # 1. Sucesso (CPF)
-    # await executar_cenario("Cenário 1: Sucesso (CPF)", "73665649153")
+    await executar_cenario("Cenário 1: Sucesso (CPF)", "73665649153")
 
     # 2. Erro (CPF Inexistente)
-    # await executar_cenario("Cenário 2: Erro (CPF Inexistente)", "99999999999")
+    await executar_cenario("Cenário 2: Erro (CPF Inexistente)", "99999999999")
 
     # 3. Sucesso (Nome Completo)
     await executar_cenario("Cenário 3: Sucesso (Nome)", "Paulo Victor Carvalho de Oliveira")

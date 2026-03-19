@@ -33,7 +33,11 @@ async def consultar_portal(
         resultado = await scraper.consultar(identificador, filtro_social)
         return resultado
     except Exception as e:
-        return {"status": "error", "mensagem": str(e)}
+        return {
+            "status": "error", 
+            "identificador": identificador, 
+            "mensagem": f"Erro inesperado: {str(e)}"
+        }
 
 if __name__ == "__main__":
     import uvicorn
