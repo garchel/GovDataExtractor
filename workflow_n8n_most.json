@@ -1,0 +1,310 @@
+{
+  "name": "GovDataExtractor",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        0
+      ],
+      "id": "21d0db59-3901-46b4-9b80-a1026373bec0",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "http://api:8000/consultar",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "identificador",
+              "value": "={{ $json.identificador }}"
+            },
+            {
+              "name": "filtro_social",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        496,
+        16
+      ],
+      "id": "e700f63c-c5d5-41bd-b815-f7434f524b07",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "name": "={{ $node[\"HTTP Request\"].json[\"identificador\"] }}_{{ $now.format('yyyy-mm-dd_HH-mm') }}.json",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "https://drive.google.com/drive/u/1/folders/1d_8ZJC9Wp38pQnC7e70FEmIF2VyhALyX",
+          "mode": "url"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        848,
+        16
+      ],
+      "id": "c67afd77-fba9-49b9-a58a-5d61cb962d9f",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "6SPFpZSo6fmEf1R6",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1xkwEJ4Y6yCpxYjGqKpcammLwfzDyxsqsOZuEoJXTajc/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xkwEJ4Y6yCpxYjGqKpcammLwfzDyxsqsOZuEoJXTajc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $json.id }}",
+            "Nome": "={{ $json.name }}",
+            "CPF": "={{ $json.cpf }}",
+            "Data_Hora": "={{ $now.format('yyyy-MM-dd_HH-mm') }}",
+            "Link_Drive": "={{ $json.webViewLink }}"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nome",
+              "displayName": "Nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CPF",
+              "displayName": "CPF",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data_Hora",
+              "displayName": "Data_Hora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Link_Drive",
+              "displayName": "Link_Drive",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1008,
+        16
+      ],
+      "id": "18c00883-98b1-4ba6-961b-9f44f0289ccd",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "y06lD4NakKes7tce",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "={{ $json.identificador }}_{{ $now.format('yyyy-MM-dd_HH-mm') }}.json"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        16
+      ],
+      "id": "f7113ada-47de-40eb-933c-5d5055509369",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { id_teste: \"SUCESSO_CPF\", identificador: \"73665657172\", filtro_social: false } },\n  { json: { id_teste: \"ERRO_CPF\", identificador: \"99999999999\", filtro_social: false } },\n  { json: { id_teste: \"SUCESSO_NOME\", identificador: \"Maria Barbara Carvalho de Oliveira\", filtro_social: false } },\n  { json: { id_teste: \"ERRO_NOME\", identificador: \"Nome Inexistente XPTO\", filtro_social: false } },\n  { json: { id_teste: \"FILTRADO\", identificador: \"Oliveira\", filtro_social: true } }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c437cfc3-6e81-422b-a152-dd22d62e7eb9",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b71817cf-ece6-4b85-b624-52ee18e47094",
+      "name": "Loop Over Items"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6009d586-ceb1-43e0-9a47-51a7aa8172ab",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5ddd38c110b58d4b378c5bc68007cdb044d68028427340da15f1291ea26eaa93"
+  },
+  "id": "tw4rHotvMj0fNF61",
+  "tags": []
+}
