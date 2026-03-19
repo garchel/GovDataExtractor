@@ -53,9 +53,11 @@ Para testar a Parte 2 (Hiperautomação), siga os passos:
 
 2. Crie um novo workflow e importe o arquivo workflow_n8n_most.json (Botão de 3 pontos no canto superior direito > Import from File).
 
-3. 🚨🚨🚨 **Credenciais**: Como se trata de um ambiente local, você precisará vincular suas próprias credenciais (OAuth 2.0) nos nós do **Google Drive** e **Google Sheets**.
+3. 🚨 Credenciais: Por questões de segurança e boas práticas de desenvolvimento (LGPD/OWASP), as credenciais OAuth 2.0 não foram incluídas no repositório.  
+- **Nota Técnica**: Para validar a integração com Drive/Sheets, o avaliador deverá configurar seu próprio Client ID e Secret no console do Google Cloud e vinculá-los ao n8n.
+- **Demonstração**: Caso prefira não configurar as chaves, a Parte 1 (RPA) pode ser testada via Swagger e a Parte 2 (Hiperautomação) será demonstrada em pleno funcionamento durante a apresentação técnica agendada.
 
-4. O workflow já está configurado com os **5 cenários de teste solicitados no desafio** (Sucesso CPF, Erro CPF, Sucesso Nome, Erro Nome e Filtro Social).
+5. O workflow já está configurado com os **5 cenários de teste solicitados no desafio** (Sucesso CPF, Erro CPF, Sucesso Nome, Erro Nome e Filtro Social).
 
 ## Desafios Enfrentados e Soluções Técnicas
 1. **Sincronização AJAX (Race Conditions)** O portal atualiza resultados via chamadas assíncronas sem recarregar a URL.  
