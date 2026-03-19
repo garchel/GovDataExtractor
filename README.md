@@ -8,26 +8,27 @@ O projeto é dividido em duas camadas principais:
 1. **Worker API (RPA)**: Container Python/FastAPI que executa o robô Playwright.
 
 2. **Orquestrador (n8n)**: Workflow que gerencia o ciclo de vida da consulta:
+
 ````Requisição API → Processamento → Geração de JSON → Upload Google Drive → Log Google Sheets.````
 
 ## Organização dos Arquivos
 
-***config.py:*** Centraliza seletores CSS, URLs e timeouts. Facilita a manutenção rápida caso o layout do portal mude.
+- **config.py:** Centraliza seletores CSS, URLs e timeouts. Facilita a manutenção rápida caso o layout do portal mude.
 
-***browser.py:*** Gerencia o ciclo de vida do navegador com integração de Stealth Mode para evitar detecção por WAF/Bot-Blockers.
+- **browser.py:** Gerencia o ciclo de vida do navegador com integração de Stealth Mode para evitar detecção por WAF/Bot-Blockers.
 
-***utils.py:*** Funções puras de processamento (Regex de CPF, conversão Base64 e slugificação de nomes).
+- **utils.py:** Funções puras de processamento (Regex de CPF, conversão Base64 e slugificação de nomes).
 
-***scraper.py:*** A lógica core do RPA, focada puramente na navegação e extração.
+- **scraper.py:** A lógica core do RPA, focada puramente na navegação e extração.
 
-***api.py:*** Interface FastAPI que expõe o robô como um serviço documentado via Swagger.
+- **api.py:** Interface FastAPI que expõe o robô como um serviço documentado via Swagger.
 
 ## Diferenciais Técnicos
-**Modularização**: Código separado por responsabilidades (Browser, Scraper, API, Utils).
+- **Modularização**: Código separado por responsabilidades (Browser, Scraper, API, Utils).
 
-**Stealth Mode**: Integração de técnicas para evitar detecção por WAF/Bot-Blockers.
+- **Stealth Mode**: Integração de técnicas para evitar detecção por WAF/Bot-Blockers.
 
-**Escalabilidade**: Orquestração preparada para execuções sequenciais (Batching), garantindo integridade dos dados.
+- **Escalabilidade**: Orquestração preparada para execuções sequenciais (Batching), garantindo integridade dos dados.
 
 ## Como Executar (Docker)
 Esta é a forma recomendada, pois configura automaticamente a API e o ambiente do n8n.
@@ -57,24 +58,16 @@ Para testar a Parte 2 (Hiperautomação), siga os passos:
 4. O workflow já está configurado com os **5 cenários de teste solicitados no desafio** (Sucesso CPF, Erro CPF, Sucesso Nome, Erro Nome e Filtro Social).
 
 ## Desafios Enfrentados e Soluções Técnicas
-1. **Sincronização AJAX (Race Conditions)**
-O portal atualiza resultados via chamadas assíncronas sem recarregar a URL.
-
+1. **Sincronização AJAX (Race Conditions)** O portal atualiza resultados via chamadas assíncronas sem recarregar a URL.  
 **Solução**: Implementação de uma sincronização híbrida no método _validar_e_selecionar_resultado, que valida a mudança no texto do contador (#countResultados) antes de prosseguir, evitando que o bot colete dados do teste anterior.
 
-2. **Evasão de Detecção (Bot Detection)**
-Sites governamentais possuem camadas de segurança contra automações simples.
-
+2. **Evasão de Detecção (Bot Detection)** Sites governamentais possuem camadas de segurança contra automações simples.  
 **Solução**: Implementação da biblioteca playwright-stealth e sobreescrita da propriedade navigator.webdriver. Além disso, o uso do navegador Firefox (via Playwright) em modo headless demonstrou maior estabilidade contra desafios de rede.
 
-3. Extração Multinível de Benefícios
-Coletar dados de acordeões dinâmicos (Auxílio Brasil, Bolsa Família) exige gerenciar o estado do DOM.
-
+3. **Extração Multinível de Benefícios** Coletar dados de acordeões dinâmicos (Auxílio Brasil, Bolsa Família) exige gerenciar o estado do DOM.  
 **Solução**: O robô itera sobre as tabelas de recursos, clica em "Detalhar", captura a evidência em Base64 e utiliza page.go_back() com espera por networkidle, garantindo que o contexto seja preservado para o próximo benefício da lista.
 
-4. Orquestração em Lote (Batching)
-Disparar 5 consultas simultâneas causava concorrência no contexto do navegador (Playwright).
-
+4. **Orquestração em Lote (Batching)** Disparar 5 consultas simultâneas causava concorrência no contexto do navegador (Playwright).  
 **Solução**: No n8n, utilizamos o nó Loop Over Items com processamento sequencial. Isso garante que cada consulta tenha uma instância limpa e estável do navegador no Docker.
 
 ## Estrutura de Saída (JSON)
