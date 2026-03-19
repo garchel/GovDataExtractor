@@ -10,8 +10,8 @@ COPY requirements.txt .
 # Instala as dependências do Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Instala apenas o navegador Firefox
-RUN playwright install firefox
+# Garante a instalação do pacote e depois do navegador
+RUN pip install playwright && python -m playwright install firefox
 
 # Copia o restante do código para o container
 COPY . .

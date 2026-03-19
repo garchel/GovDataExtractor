@@ -26,11 +26,15 @@ async def consultar_portal(
     """
     Endpoint que aciona o robô para realizar a consulta no Portal da Transparência.
     """
+
+    print(f"DEBUG: Recebida requisição para {identificador}")
     scraper = PortalScraper()
-    resultado = await scraper.consultar(identificador, filtro_social)
-    return resultado
+    try:
+        resultado = await scraper.consultar(identificador, filtro_social)
+        return resultado
+    except Exception as e:
+        return {"status": "error", "mensagem": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
-    # Roda o servidor na porta 8000
     uvicorn.run(app, host="0.0.0.0", port=8000)
